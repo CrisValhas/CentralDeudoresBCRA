@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import SearchForm from "./components/SearchForm";
 import ResultCard from "./components/ResultCard";
+import BCRA from "../src/unnamed.jpg";
 
 export default function App() {
   const [data, setData] = useState(null);
@@ -38,7 +39,10 @@ export default function App() {
   return (
     <div className={`app-root theme-${theme}`}>
       <header className="header">
-        <div className="app-title">Buscador deudas BCRA</div>
+        <img src={BCRA} style={{ width: "4rem", borderRadius: "12px" }} />
+        <div className="app-title" onClick={() => location.reload()}>
+          Buscador deudas BCRA
+        </div>
         <div style={{ marginLeft: "auto" }}>
           <label className="header-toggle">
             <input
@@ -68,17 +72,12 @@ export default function App() {
         {error && <div className="error">{error}</div>}
 
         {data && <ResultCard data={data} historicalQuery={lastHistorical} />}
-
-        {!data && !loading && (
-          <div className="hint">
-            Ingrese una identificación y presione "Buscar" para ver resultados.
-          </div>
-        )}
       </main>
 
       <footer className="footer">
         <a
           href="www.linkedin.com/in/cristian-valtelhas-software-engineer"
+          target="_blank"
           style={{ color: "inherit", textDecoration: "none" }}
         >
           Powered By Cristian Valtelhas
