@@ -76,8 +76,9 @@ export default function App() {
 
       <footer className="footer">
         <a
-          href="www.linkedin.com/in/cristian-valtelhas-software-engineer"
+          href="https://www.linkedin.com/in/cristian-valtelhas-software-engineer"
           target="_blank"
+          rel="noopener noreferrer"
           style={{ color: "inherit", textDecoration: "none" }}
         >
           Powered By Cristian Valtelhas
