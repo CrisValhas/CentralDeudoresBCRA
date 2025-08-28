@@ -32,16 +32,22 @@ function formatPeriodo(p) {
 }
 
 function fmtMontoMilPesos(n) {
-  if (n == null) return "$ 0 mil";
+  if (n == null) return "$ 0";
+
   const num = Number(n);
-  if (Number.isNaN(num)) return `$ ${n} mil`;
-  if (Number.isInteger(num)) return `$ ${num} mil`;
-  return `$ ${Math.round(num * 10) / 10} mil`;
+  if (Number.isNaN(num)) return `$ ${n}`;
+  const monto = Number.isInteger(num) ? num * 1000 : Math.round(num * 1000);
+  return new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(monto);
 }
 
 function situacionColor(code) {
-  if (code === 0) return "green";
-  if (code === 1) return "yellow";
+  if (code === 0 || code === 1) return "green";
+  if (code === 2 || code === 3) return "yellow";
   if (code >= 4) return "red";
   return "gray";
 }
@@ -168,8 +174,8 @@ function EntityRow({ entidad, records = [], idx = 0 }) {
                 Situación crediticia: {latest?.situacion ?? "-"}
               </div>
               <div className="situ-tooltip-body">
-                <li>0 = Normal</li>
-                <li>1 = Observada</li>
+                <li>0, 1 = Normal</li>
+                <li>2, 3 = Observada</li>
                 <li>4+ = Alto riesgo</li>
               </div>
             </div>
