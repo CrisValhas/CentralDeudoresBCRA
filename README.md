@@ -5,7 +5,6 @@ Simple, minimal app to query the BCRA Central de Deudores API.
 Quick start (Windows, bash):
 
 ```bash
-cd "C:/Users/crist/OneDrive/Documentos/CentralDeudores"
 npm install
 npm run dev
 ```
@@ -15,4 +14,3 @@ The app exposes a field for `Identificación` and a `Histórico` toggle. Periods
 Notes:
 
 - No authentication required for the public endpoints used here.
-- If the API becomes protected, you'll need to add an API key flow.
