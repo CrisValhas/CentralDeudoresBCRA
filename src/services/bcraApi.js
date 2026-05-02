@@ -1,6 +1,4 @@
-const DEFAULT_BCRA_API_BASE = import.meta.env.DEV
-  ? "/bcra-api/CentralDeDeudores/v1.0"
-  : "https://api.bcra.gob.ar/CentralDeDeudores/v1.0";
+const DEFAULT_BCRA_API_BASE = "/api/bcra/CentralDeDeudores/v1.0";
 
 const BCRA_API_BASE =
   import.meta.env.VITE_BCRA_API_BASE || DEFAULT_BCRA_API_BASE;

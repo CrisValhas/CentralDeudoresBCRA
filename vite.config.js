@@ -5,11 +5,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      "/bcra-api": {
+      "/api/bcra": {
         target: "https://api.bcra.gob.ar",
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/bcra-api/, ""),
+        rewrite: (path) => path.replace(/^\/api\/bcra/, ""),
       },
     },
   },
