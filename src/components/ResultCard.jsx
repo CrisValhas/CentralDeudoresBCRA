@@ -24,25 +24,28 @@ ChartJS.register(
   TimeScale
 );
 
-function formatPeriodo(p) {
-  if (!p) return "";
-  const s = String(p);
-  if (s.length === 6) return `${s.slice(0, 4)}-${s.slice(4, 6)}`;
-  return s;
+function formatPeriodo(periodo) {
+  if (!periodo) return "";
+  const value = String(periodo);
+  if (value.length === 6) return `${value.slice(0, 4)}-${value.slice(4, 6)}`;
+  return value;
 }
 
-function fmtMontoMilPesos(n) {
-  if (n == null) return "$ 0";
+function fmtMontoMilPesos(value) {
+  if (value == null) return "$ 0";
 
-  const num = Number(n);
-  if (Number.isNaN(num)) return `$ ${n}`;
-  const monto = Number.isInteger(num) ? num * 1000 : Math.round(num * 1000);
+  const numericValue = Number(value);
+  if (Number.isNaN(numericValue)) return `$ ${value}`;
+  const amount = Number.isInteger(numericValue)
+    ? numericValue * 1000
+    : Math.round(numericValue * 1000);
+
   return new Intl.NumberFormat("es-AR", {
     style: "currency",
     currency: "ARS",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(monto);
+  }).format(amount);
 }
 
 function situacionColor(code) {
@@ -52,21 +55,31 @@ function situacionColor(code) {
   return "gray";
 }
 
+function situacionLabel(code) {
+  if (code === 0 || code === 1) return "Normal";
+  if (code === 2 || code === 3) return "Observada";
+  if (code >= 4) return "Alto riesgo";
+  return "Sin calificación";
+}
+
 function groupByEntidad(periodos = []) {
   const map = new Map();
-  periodos.forEach((p) => {
-    const periodo = p.periodo;
-    (p.entidades || []).forEach((ent) => {
-      const key = ent.entidad || "Sin entidad";
+
+  periodos.forEach((periodoItem) => {
+    const periodo = periodoItem.periodo;
+    (periodoItem.entidades || []).forEach((entidadItem) => {
+      const key = entidadItem.entidad || "Sin entidad";
       if (!map.has(key)) map.set(key, []);
-      map.get(key).push({ ...ent, periodo });
+      map.get(key).push({ ...entidadItem, periodo });
     });
   });
+
   const result = [];
   map.forEach((list, entidad) => {
     list.sort((a, b) => String(b.periodo).localeCompare(String(a.periodo)));
     result.push({ entidad, list });
   });
+
   return result;
 }
 
@@ -74,26 +87,32 @@ function ChartHistory({ records = [] }) {
   if (!records || records.length <= 1) return null;
 
   const dataPoints = records
-    .map((r) => {
-      const p = String(r.periodo || "");
-      if (p.length >= 6) {
-        const y = Number(p.slice(0, 4));
-        const m = Number(p.slice(4, 6)) - 1;
-        return { x: new Date(y, m, 1), y: Number(r.monto || 0), raw: r };
+    .map((record) => {
+      const periodo = String(record.periodo || "");
+      if (periodo.length >= 6) {
+        const year = Number(periodo.slice(0, 4));
+        const month = Number(periodo.slice(4, 6)) - 1;
+        return {
+          x: new Date(year, month, 1),
+          y: Number(record.monto || 0),
+        };
       }
-      const x = r.fechaSit1 ? new Date(r.fechaSit1) : new Date();
-      return { x, y: Number(r.monto || 0), raw: r };
+
+      return {
+        x: record.fechaSit1 ? new Date(record.fechaSit1) : new Date(),
+        y: Number(record.monto || 0),
+      };
     })
     .sort((a, b) => a.x - b.x);
 
   const data = {
     datasets: [
       {
-        label: "Monto (mil)",
+        label: "Monto",
         data: dataPoints,
-        tension: 0.3,
-        borderColor: "#2563eb",
-        backgroundColor: "rgba(37,99,235,0.08)",
+        tension: 0.32,
+        borderColor: "#0f766e",
+        backgroundColor: "rgba(15, 118, 110, 0.12)",
         pointRadius: 4,
         pointHoverRadius: 6,
       },
@@ -108,10 +127,13 @@ function ChartHistory({ records = [] }) {
       legend: { display: false },
       tooltip: {
         callbacks: {
-          label: (ctx) => `${fmtMontoMilPesos(ctx.parsed.y)}`,
+          label: (context) => fmtMontoMilPesos(context.parsed.y),
           title: (items) => {
-            const d = items[0];
-            return new Date(d.parsed.x).toLocaleDateString();
+            const item = items[0];
+            return new Date(item.parsed.x).toLocaleDateString("es-AR", {
+              month: "long",
+              year: "numeric",
+            });
           },
         },
       },
@@ -123,14 +145,14 @@ function ChartHistory({ records = [] }) {
         grid: { display: false },
       },
       y: {
-        ticks: { callback: (v) => `${v} mil` },
-        grid: { color: "rgba(0,0,0,0.04)" },
+        ticks: { callback: (tick) => `${tick} mil` },
+        grid: { color: "rgba(100, 116, 139, 0.18)" },
       },
     },
   };
 
   return (
-    <div style={{ width: "100%", height: 180, marginBottom: 8 }}>
+    <div className="chart-box">
       <Line data={data} options={options} />
     </div>
   );
@@ -147,22 +169,12 @@ function EntityRow({ entidad, records = [], idx = 0 }) {
         <div className="entity-info">
           <div className="ent-title">
             <span
-              className="situ-dot"
-              style={{
-                background: color,
-                display: "inline-block",
-                width: 12,
-                height: 12,
-                borderRadius: 6,
-                marginRight: 8,
-              }}
+              className={`situ-dot dot-${color}`}
               aria-describedby={`situ-tooltip-${idx}`}
               tabIndex={0}
               title={`Situación ${latest?.situacion ?? "-"}`}
             />
-            <span className="ent-title-text" style={{ fontWeight: 600 }}>
-              {entidad}
-            </span>
+            <span className="ent-title-text">{entidad}</span>
 
             <div
               role="tooltip"
@@ -174,18 +186,20 @@ function EntityRow({ entidad, records = [], idx = 0 }) {
                 Situación crediticia: {latest?.situacion ?? "-"}
               </div>
               <div className="situ-tooltip-body">
-                <li>0, 1 = Normal</li>
-                <li>2, 3 = Observada</li>
-                <li>4+ = Alto riesgo</li>
+                <div>0, 1 = Normal</div>
+                <div>2, 3 = Observada</div>
+                <div>4+ = Alto riesgo</div>
               </div>
             </div>
           </div>
 
           <div className="ent-sub">
+            <span className={`risk-chip risk-${color}`}>
+              {situacionLabel(latest?.situacion)}
+            </span>
             <span className="period">{formatPeriodo(latest?.periodo)}</span>
             <span className="dias-label">Deuda total informada:</span>
             <span className="dias">{fmtMontoMilPesos(latest?.monto)}</span>
-            <span className="monto"></span>
             {latest?.procesoJud && (
               <span className="badge badge-jud">En proceso judicial</span>
             )}
@@ -202,10 +216,10 @@ function EntityRow({ entidad, records = [], idx = 0 }) {
           <div className="right-meta">
             <button
               className="toggle"
-              onClick={() => setOpen((v) => !v)}
+              onClick={() => setOpen((value) => !value)}
               aria-expanded={open}
             >
-              {open ? "Ocultar historial" : `Ver historial`}
+              {open ? "Ocultar" : "Historial"}
             </button>
           </div>
         )}
@@ -222,26 +236,41 @@ function EntityRow({ entidad, records = [], idx = 0 }) {
 
 export default function ResultCard({ data }) {
   if (!data) return null;
+
   const { identificacion, denominacion, periodos } = data;
   const grouped = useMemo(() => groupByEntidad(periodos), [periodos]);
+  const total = grouped.reduce((sum, item) => {
+    return sum + Number(item.list?.[0]?.monto || 0);
+  }, 0);
 
   return (
     <section className="result-card">
       <div className="summary">
         <div className="summary-left">
+          <div className="summary-label">Resultado</div>
           <div className="ident">{identificacion}</div>
-          <div className="name">{denominacion}</div>
+          <div className="name">{denominacion || "Sin denominación informada"}</div>
+        </div>
+        <div className="summary-metrics">
+          <div>
+            <span>Entidades</span>
+            <strong>{grouped.length}</strong>
+          </div>
+          <div>
+            <span>Total último período</span>
+            <strong>{fmtMontoMilPesos(total)}</strong>
+          </div>
         </div>
       </div>
 
       <div className="entities-list">
         {grouped.length ? (
           grouped.map(({ entidad, list }, idx) => (
-            <EntityRow key={idx} entidad={entidad} records={list} idx={idx} />
+            <EntityRow key={entidad} entidad={entidad} records={list} idx={idx} />
           ))
         ) : (
           <div className="no-periods">
-            No existen periodos para la identificación consultada.
+            No existen períodos para la identificación consultada.
           </div>
         )}
       </div>

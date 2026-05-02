@@ -1,36 +1,33 @@
 import React, { useState } from "react";
 import SearchForm from "./components/SearchForm";
 import ResultCard from "./components/ResultCard";
+import { fetchDeudas as fetchDeudasFromBcra } from "./services/bcraApi";
 import BCRA from "../src/unnamed.jpg";
 
 export default function App() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  // default to system preference; toggle overrides
   const prefersDark =
     typeof window !== "undefined" &&
     window.matchMedia &&
     window.matchMedia("(prefers-color-scheme: dark)").matches;
   const [theme, setTheme] = useState(prefersDark ? "dark" : "light");
-  const [lastHistorical, setLastHistorical] = useState(false);
+  const [lastHistorical, setLastHistorical] = useState(true);
+  const [lastSearch, setLastSearch] = useState("");
 
   async function fetchDeudas(identificacion, historical = false) {
     setLoading(true);
     setError(null);
     setData(null);
-    const base = "https://api.bcra.gob.ar/centraldedeudores/v1.0";
-    const path = historical ? "Deudas/Historicas" : "Deudas";
+    setLastSearch(identificacion);
+
     try {
-      const res = await fetch(
-        `${base}/${path}/${encodeURIComponent(identificacion)}`
-      );
-      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-      const json = await res.json();
-      setData(json.results || json);
+      const result = await fetchDeudasFromBcra(identificacion, historical);
+      setData(result);
       setLastHistorical(historical);
     } catch (err) {
-      setError(String(err));
+      setError(err.message || "No se pudo completar la consulta.");
     } finally {
       setLoading(false);
     }
@@ -39,16 +36,20 @@ export default function App() {
   return (
     <div className={`app-root theme-${theme}`}>
       <header className="header">
-        <img src={BCRA} style={{ width: "4rem", borderRadius: "12px" }} />
-        <div className="app-title" onClick={() => location.reload()}>
-          Buscador deudas BCRA
-        </div>
-        <div style={{ marginLeft: "auto" }}>
-          <label className="header-toggle">
+        <button className="brand" type="button" onClick={() => location.reload()}>
+          <img src={BCRA} alt="" className="brand-logo" />
+          <span>
+            <span className="brand-eyebrow">BCRA</span>
+            <span className="app-title">Central de Deudores</span>
+          </span>
+        </button>
+
+        <div className="header-actions">
+          <label className="header-toggle" title="Cambiar tema">
             <input
               type="checkbox"
               onChange={() =>
-                setTheme((t) => (t === "light" ? "dark" : "light"))
+                setTheme((current) => (current === "light" ? "dark" : "light"))
               }
               checked={theme === "dark"}
             />
@@ -58,16 +59,34 @@ export default function App() {
       </header>
 
       <main className="container">
-        <div className="hero">
+        <section className="hero">
+          <div className="hero-copy">
+            <p className="kicker">Consulta pública</p>
+            <h1>Buscá deuda informada por CUIT, CUIL o CDI</h1>
+            <p>
+              Visualizá entidades, situación crediticia, saldos informados y la
+              evolución de los últimos períodos disponibles.
+            </p>
+          </div>
           <SearchForm onSearch={fetchDeudas} loading={loading} />
-        </div>
+        </section>
 
-        <div className="app-summary">
-          Esta aplicación consulta el servicio del BCRA y muestra deudas por
-          entidad; la tarjeta muestra el monto total adeudado informado por la
-          entidad para el periodo más reciente y, al desplegar, verás las
-          declaraciones mensuales que la entidad reportó.
-        </div>
+        <section className="status-strip" aria-label="Información del servicio">
+          <div>
+            <span>Fuente</span>
+            <strong>API oficial BCRA</strong>
+          </div>
+          <div>
+            <span>Consulta</span>
+            <strong>{lastHistorical ? "Histórica" : "Último período"}</strong>
+          </div>
+          <div>
+            <span>Identificación</span>
+            <strong>{lastSearch || "Sin consulta"}</strong>
+          </div>
+        </section>
+
+        {loading && <div className="panel-state">Consultando información...</div>}
 
         {error && <div className="error">{error}</div>}
 
@@ -79,7 +98,6 @@ export default function App() {
           href="https://www.linkedin.com/in/cristian-valtelhas-software-engineer"
           target="_blank"
           rel="noopener noreferrer"
-          style={{ color: "inherit", textDecoration: "none" }}
         >
           Powered By Cristian Valtelhas
         </a>

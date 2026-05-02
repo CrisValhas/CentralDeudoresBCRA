@@ -1,16 +1,27 @@
 # Central de Deudores - Vite + React
 
-Simple, minimal app to query the BCRA Central de Deudores API.
+Aplicación React para consultar la API pública de Central de Deudores del BCRA.
 
-Quick start (Windows, bash):
+## Inicio rápido
 
 ```bash
 npm install
 npm run dev
 ```
 
-The app exposes a field for `Identificación` and a `Histórico` toggle. Periods are displayed as `YYYY - MM` for clarity.
+La app expone un campo para `Identificación` y un selector `Histórico`.
+En desarrollo, Vite usa el proxy `/bcra-api` hacia:
 
-Notes:
+```text
+https://api.bcra.gob.ar/CentralDeDeudores/v1.0
+```
 
-- No authentication required for the public endpoints used here.
+Para apuntar a otra base de API, definí `VITE_BCRA_API_BASE`.
+
+## Scripts
+
+```bash
+npm run dev
+npm run build
+npm run preview
+```

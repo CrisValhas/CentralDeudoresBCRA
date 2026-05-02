@@ -11,7 +11,7 @@ function IconCheck() {
     >
       <path
         d="M20 6L9 17l-5-5"
-        stroke="#059669"
+        stroke="#15803d"
         strokeWidth="2.2"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -31,7 +31,7 @@ function IconX() {
     >
       <path
         d="M18 6L6 18M6 6l12 12"
-        stroke="#dc2626"
+        stroke="#b91c1c"
         strokeWidth="2.2"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -41,28 +41,28 @@ function IconX() {
 }
 
 export default function SearchForm({ onSearch, loading }) {
-  const [value, setValue] = useState(""); // raw digits
+  const [value, setValue] = useState("");
   const [historical, setHistorical] = useState(true);
   const [touched, setTouched] = useState(false);
   const [focused, setFocused] = useState(false);
 
-  function onlyDigits(s) {
-    return String(s || "").replace(/\D/g, "");
+  function onlyDigits(input) {
+    return String(input || "").replace(/\D/g, "");
   }
 
-  function formatVisual(s) {
-    const d = onlyDigits(s);
-    if (!d) return "";
-    const part1 = d.slice(0, 2);
-    const part2 = d.slice(2, 10);
-    const part3 = d.slice(10, 11);
+  function formatVisual(input) {
+    const digits = onlyDigits(input);
+    if (!digits) return "";
+    const part1 = digits.slice(0, 2);
+    const part2 = digits.slice(2, 10);
+    const part3 = digits.slice(10, 11);
     return [part1, part2, part3].filter(Boolean).join(" ");
   }
 
   const isValid = value.length === 11;
 
-  function submit(e) {
-    e.preventDefault();
+  function submit(event) {
+    event.preventDefault();
     setTouched(true);
     if (!isValid) return;
     onSearch(value, historical);
@@ -70,14 +70,18 @@ export default function SearchForm({ onSearch, loading }) {
 
   return (
     <form className="search-form" onSubmit={submit}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-        }}
-      >
-        <label className="label">Identificación (CUIT/CUIL/CDI)</label>
+      <div className="form-head">
+        <label className="label" htmlFor="identificacion">
+          Identificación (CUIT/CUIL/CDI)
+        </label>
+        <label className="checkbox">
+          <input
+            type="checkbox"
+            checked={historical}
+            onChange={(event) => setHistorical(event.target.checked)}
+          />
+          Histórico
+        </label>
       </div>
 
       <div className="input-embed">
@@ -85,10 +89,11 @@ export default function SearchForm({ onSearch, loading }) {
           {isValid ? <IconCheck /> : value.length ? <IconX /> : null}
         </div>
         <input
+          id="identificacion"
           className="input embedded"
           value={focused ? value : formatVisual(value)}
-          onChange={(e) => {
-            const raw = onlyDigits(e.target.value);
+          onChange={(event) => {
+            const raw = onlyDigits(event.target.value);
             setValue(raw.slice(0, 11));
           }}
           placeholder="Ej: 20 12345678 3"
@@ -98,7 +103,7 @@ export default function SearchForm({ onSearch, loading }) {
             setFocused(false);
           }}
           onFocus={() => setFocused(true)}
-          aria-invalid={!isValid}
+          aria-invalid={touched && !isValid}
         />
 
         <button
@@ -106,7 +111,7 @@ export default function SearchForm({ onSearch, loading }) {
           className="btn primary embedded-btn"
           disabled={loading || !isValid}
         >
-          {loading ? "..." : "Buscar"}
+          {loading ? "Buscando" : "Buscar"}
         </button>
       </div>
 
@@ -115,17 +120,6 @@ export default function SearchForm({ onSearch, loading }) {
           La identificación debe tener exactamente 11 dígitos numéricos.
         </div>
       )}
-
-      <div style={{ marginTop: 8 }}>
-        <label className="checkbox">
-          <input
-            type="checkbox"
-            checked={historical}
-            onChange={(e) => setHistorical(e.target.checked)}
-          />
-          Histórico
-        </label>
-      </div>
     </form>
   );
 }
