@@ -1,9 +1,8 @@
 const BCRA_ORIGIN = "https://api.bcra.gob.ar";
 
 export default async function handler(request, response) {
-  const path = Array.isArray(request.query.path)
-    ? request.query.path.join("/")
-    : request.query.path || "";
+  const rawPath = request.query.path || "";
+  const path = Array.isArray(rawPath) ? rawPath.join("/") : rawPath;
   const query = new URLSearchParams(request.query);
 
   query.delete("path");
